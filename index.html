@@ -3,126 +3,29 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Rock Paper Scissors</title>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      text-align: center;
-      margin-top: 60px;
-      background-color: #f4f4f4;
-    }
-    h1 {
-      color: #333;
-    }
-    .choices button {
-      font-size: 48px;
-      margin: 10px;
-      padding: 15px 25px;
-      cursor: pointer;
-      border: 2px solid #333;
-      border-radius: 12px;
-      background: white;
-    }
-    .choices button:hover {
-      background: #e0e0e0;
-    }
-    #result {
-      font-size: 24px;
-      margin: 30px 0 10px;
-      min-height: 30px;
-    }
-    #picks {
-      font-size: 18px;
-      color: #555;
-      min-height: 25px;
-    }
-    .scoreboard {
-      display: flex;
-      justify-content: center;
-      gap: 40px;
-      margin: 30px 0;
-      font-size: 20px;
-    }
-    .scoreboard span {
-      font-weight: bold;
-      font-size: 32px;
-      display: block;
-    }
-    #reset {
-      padding: 10px 20px;
-      font-size: 16px;
-      cursor: pointer;
-    }
-  </style>
+  <title>Ham I Right</title>
+  <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
-  <h1>Rock Paper Scissors</h1>
-  <p>Pick one:</p>
+  <header class="title-bar">
+    <h1>Ham I Right</h1>
+  </header>
 
-  <div class="choices">
-    <button onclick="play('rock')">🪨</button>
-    <button onclick="play('paper')">📄</button>
-    <button onclick="play('scissors')">✂️</button>
-  </div>
+  <main>
+    <section>
+      <h2>Project Question</h2>
+      <p>Can we accuratley predict the price of a ham product based on the size of the package, the time of maturation, whether it's organic, smoked, or domestically produced?</p>
+    </section>
 
-  <div id="result"></div>
-  <div id="picks"></div>
+    <section>
+      <h2>Data Site</h2>
+      <p><a href="https://cmustatistics.github.io/data-repository/" target="_blank" rel="noopener">https://cmustatistics.github.io/data-repository/</a></p>
+    </section>
 
-  <div class="scoreboard">
-    <div>Wins<span id="wins">0</span></div>
-    <div>Losses<span id="losses">0</span></div>
-    <div>Ties<span id="ties">0</span></div>
-  </div>
-
-  <button id="reset" onclick="resetScore()">Reset score</button>
-
-  <script>
-    let wins = 0;
-    let losses = 0;
-    let ties = 0;
-
-    const options = ['rock', 'paper', 'scissors'];
-    const emojis = { rock: '🪨', paper: '📄', scissors: '✂️' };
-
-    function play(playerChoice) {
-      const computerChoice = options[Math.floor(Math.random() * 3)];
-      let message;
-
-      if (playerChoice === computerChoice) {
-        ties++;
-        message = "It's a tie!";
-      } else if (
-        (playerChoice === 'rock' && computerChoice === 'scissors') ||
-        (playerChoice === 'paper' && computerChoice === 'rock') ||
-        (playerChoice === 'scissors' && computerChoice === 'paper')
-      ) {
-        wins++;
-        message = 'You win!';
-      } else {
-        losses++;
-        message = 'You lose!';
-      }
-
-      document.getElementById('result').textContent = message;
-      document.getElementById('picks').textContent =
-        'You: ' + emojis[playerChoice] + '   Computer: ' + emojis[computerChoice];
-      updateScore();
-    }
-
-    function updateScore() {
-      document.getElementById('wins').textContent = wins;
-      document.getElementById('losses').textContent = losses;
-      document.getElementById('ties').textContent = ties;
-    }
-
-    function resetScore() {
-      wins = 0;
-      losses = 0;
-      ties = 0;
-      document.getElementById('result').textContent = '';
-      document.getElementById('picks').textContent = '';
-      updateScore();
-    }
-  </script>
+    <section>
+      <h2>Authors</h2>
+      <p>Gavin Weber, Zach Jorgensen, and Ryan Bird</p>
+    </section>
+  </main>
 </body>
 </html>
