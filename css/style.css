@@ -32,6 +32,42 @@ body {
   line-height: 1.1;
 }
 
+/* Tabs */
+.tabs {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: .5rem;
+  background: var(--paper);
+  border-bottom: 2px solid var(--ham);
+  padding: 1rem 1.5rem 0;
+}
+
+.tabs a {
+  display: inline-block;
+  padding: .6rem 1.75rem;
+  background: var(--ham);
+  color: var(--brine);
+  font-weight: bold;
+  text-decoration: none;
+  word-break: normal;
+  border: 2px solid var(--ham);
+  border-bottom: none;
+  border-radius: 8px 8px 0 0;
+  margin-bottom: -2px;
+}
+
+.tabs a:hover {
+  background: var(--brine);
+  border-color: var(--brine);
+  color: #fff;
+}
+
+.tabs a:focus-visible {
+  outline: 3px solid var(--rind);
+  outline-offset: 3px;
+}
+
 /* Content */
 main {
   width: min(760px, 100% - 3rem);

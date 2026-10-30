@@ -1,0 +1,161 @@
+---
+title: "AI-Use Ham I Right?"
+subtitle: "STAT 330 Portfolio Project"
+author: "Zachary Jorgensen, Ryan Bird, Gavin Weber"
+format:
+  html:
+    theme: cosmo
+    toc: true
+    code-fold: true
+    code-summary: "Show code"
+    embed-resources: true
+execute:
+  warning: false
+  message: false
+---
+
+**Group members:** Ryan Bird. Zach Jorgensen, Gavin Weber
+
+# Question
+
+Can we accurately predict the price of a ham product based on the size of the package, the time of maturation, whether it's organic, smoked, or domestically produced? This answer matters because it enables companies to predict performance in certain markets and thus drive strategic planning and decision making.
+
+# Variables
+
+```{r}
+library(tidyverse)
+library(car)
+library(rsample)
+library(yardstick)
+
+ham <- read.csv("european-ham.csv")
+ham_simple <- ham |> 
+  select(price, packsize, maturation, smoked, organic, domestic) |> 
+  mutate(
+    domestic = as.factor(domestic),
+    organic = as.factor(organic),
+    smoked = as.factor(smoked)
+  )
+```
+
+Our "ham" dataset has 768 observations of 23 variables. Each observation represents the characteristics of one ham from a European Seller located using online shopping data. Our response variable is price (the price per 100g in €) and our candidate predictors are packsize (Size of the ham package, g), maturation (# of months the ham has matured), organic (Indicator, 1 = labeled organic, 0 = Otherwise ), domestic (Indicator, 1 = domestic, 0 = foreign), and smoked (Indicator, 1 = smoked, 0 = Otherwise).
+
+Data was collected from the CMU S&DS Data Repository. The website states that this dataset is meant to be open source and available for instructors and students; no permission, representation, measurement, or ethical concerns are found.
+
+# Baseline Result
+
+## Baseline model
+
+```{r}
+ham_model <- lm(price ~ packsize + maturation + I(organic) + I(smoked) + I(domestic), data = ham_simple)
+summary(ham_model)
+confint(ham_model)
+```
+
+Holding maturation time and status of organic, smoked and domestic constant, for every additional 100 grams of ham contained in the package, we would expect to see a decrease of 1.14 € on average (95% CI, -1.47 to -0.81). Our R\^2 is not exceptionally high (\~44.1%); adding additional meaningful predictors could increase our ability to accurately predict ham prices.
+
+## Check Assumptions
+
+### LINE
+
+```{r}
+plot(ham_model, which = 1:5)
+avPlots(ham_model)
+vif(ham_model)
+```
+
+We are seriously concerned about the normality assumption being violated, and have minor doubts about the linearity. We suspect that there are a few overly influential observations as well. There does not appear to be any instances of multi-collinearity.
+
+### Investigate Outliers
+
+```{r}
+ham_no_outliers <- ham_simple[-c(698, 613, 106), ]
+ham_model_no_outliers <- lm(price ~ packsize + maturation + I(organic) + I(smoked) + I(domestic), data = ham_no_outliers)
+summary(ham_model_no_outliers)
+
+plot(ham_model_no_outliers, which = 1:5)
+avPlots(ham_model_no_outliers)
+vif(ham_model_no_outliers)
+```
+
+We excluded the three most influential points but found that the assumptions were not met and now there are many other overly influential points. In order to remove all influential points we would be losing a lot of data, so we are going to include all of the data.
+
+### Transformations
+
+```{r}
+trans_1 <- lm(log(price) ~ packsize + maturation + I(organic) + I(smoked) + I(domestic), data = ham_simple)
+plot(trans_1, which = 1:5)
+avPlots(trans_1)
+vif(trans_1)
+```
+
+```{r}
+trans_2 <- lm(log(price) ~ log(packsize) + maturation + I(organic) + I(smoked) + I(domestic), data = ham_simple)
+plot(trans_2, which = 1:5)
+avPlots(trans_2)
+vif(trans_2)
+```
+
+```{r}
+trans_3 <- lm(log(price) ~ log(packsize) + sqrt(maturation) + I(organic) + I(smoked) + I(domestic), data = ham_simple)
+plot(trans_3, which = 1:5)
+avPlots(trans_3)
+vif(trans_3)
+```
+
+### Cross Validation to determine which model is better at out of sample prediction
+
+```{r}
+## 1. Create the cross-validation folds (10 folds, repeated 5 times)
+set.seed(11282025)
+folds <- vfold_cv(ham_simple, v = 10, repeats = 5) # Replace 'ham_simple' if using a different dataset
+
+# 2. Define the scoring function
+fit_and_score <- function(split, formula_obj) {
+  train_d <- analysis(split)
+  test_d <- assessment(split)
+  fit <- lm(formula_obj, data = train_d)
+  
+  test_d |>
+    mutate(.pred = predict(fit, newdata = test_d)) |>
+    # IMPORTANT: If your trans_ models predict log(price) instead of price, 
+    # change 'truth = price' to 'truth = log(price)'
+    rmse(truth = price, estimate = .pred) |> 
+    pull(.estimate)
+}
+
+# 3. Apply the function across all folds for the four models
+cv_results <- folds |>
+  mutate(
+    rmse_trans1 = map_dbl(splits, fit_and_score, formula_obj = formula(trans_1)),
+    rmse_trans2 = map_dbl(splits, fit_and_score, formula_obj = formula(trans_2)),
+    rmse_trans3 = map_dbl(splits, fit_and_score, formula_obj = formula(trans_3)),
+    rmse_ham_model = map_dbl(splits, fit_and_score, formula_obj = formula(ham_model))
+  )
+
+# 4. Reshape the data for summary and plotting
+cv_long <- cv_results |>
+  select(starts_with("rmse_")) |>
+  pivot_longer(everything(), names_to = "model", values_to = "rmse")
+
+# 5. Output the summary statistics
+cv_long |>
+  group_by(model) |>
+  summarise(
+    mean_rmse = mean(rmse),
+    sd_rmse = sd(rmse),
+    .groups = "drop"
+  )
+```
+
+::: callout-note
+We will use trans_2, or the model where both price and packsize have a logarithm transformation applied. We chose this because it has a slightly lower mean rmse than our trans_3 model and is more interpret able due to the lack of a square root transformation added. This model best fits the LINE model assumptions out of all of the models that we examined.
+:::
+
+# Limitation/Opportunity Found
+
+overly influential points - we decided we're just going to need to have them
+
+# Beyond-course extension planned ways to verify it
+
+ai search something that will help with the problem

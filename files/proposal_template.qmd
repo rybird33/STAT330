@@ -1,0 +1,107 @@
+---
+title: "Ham I Right?"
+subtitle: "STAT 330 Portfolio Project Proposal"
+author: "Zachary Jorgensen, Ryan Bird, Gavin Weber"
+format:
+  html:
+    theme: cosmo
+    toc: true
+    code-fold: true
+    code-summary: "Show code"
+    embed-resources: true
+execute:
+  warning: false
+  message: false
+---
+
+**Group members:** Ryan Bird. Zach Jorgensen, Gavin Weber
+
+## Question and audience
+
+Can we accurately predict the price of a ham product based on the size of the package, the time of maturation, whether it's organic, smoked, or domestically produced? This answer matters because it enables companies to predict performance in certain markets and thus drive strategic planning and decision making.
+
+## Data
+
+```{r}
+library(tidyverse)
+library(car)
+
+ham <- read.csv("C:\\Users\\rybird33\\Downloads\\european-ham.csv")
+ham_simple <- ham |> 
+  select(price, packsize, maturation, smoked, organic, domestic) |> 
+  mutate(
+    domestic = as.factor(domestic),
+    organic = as.factor(organic),
+    smoked = as.factor(smoked)
+  )
+```
+
+Our "ham" dataset has 768 observations of 23 variables. Each observation represents the characteristics of one ham from a European Seller located using online shopping data. Our response variable is price (the price per 100g in €) and our candidate predictors are packsize (Size of the ham package, g), maturation (# of months the ham has matured), organic (Indicator, 1 = labeled organic, 0 = Otherwise ), domestic (Indicator, 1 = domestic, 0 = foreign), and smoked (Indicator, 1 = smoked, 0 = Otherwise).
+
+Data was collected from the CMU S&DS Data Repository. The website states that this dataset is meant to be open source and available for instructors and students; no permission, representation, measurement, or ethical concerns are found.
+
+## One useful first look
+
+```{r}
+ham_simple |>
+  mutate(domestic = if_else(domestic == 1, "Domestic", "Foreign")) |> 
+  ggplot(aes(x = domestic, y = price, fill = domestic)) +
+  geom_boxplot(
+    width = 0.6,
+    alpha = 0.85,
+  ) +
+  scale_fill_manual(
+    values = c("Domestic" = "#3C8DAD", "Foreign" = "#E9A23B")
+  ) +
+  labs(
+    title = "Ham Prices by Origin",
+    x = "Ham Origin",
+    y = "Price"  ) +
+  theme_minimal(base_size = 13) +
+  theme(
+    legend.position = "none",
+    plot.title = element_text(
+      face = "bold",
+      size = 18,
+      color = "#263238"
+    ),
+    plot.subtitle = element_text(color = "#607D8B"),
+    axis.title = element_text(face = "bold"),
+    panel.grid.minor = element_blank(),
+    panel.grid.major.x = element_blank(),
+  )
+
+```
+
+There doesn't appear to be a significant difference between the price of foreign and domestic ham. Although more robust metrics will be helpful in making conclusions, it appears that Foreign ham may have a slightly higher median price per 100g.
+
+## Baseline model
+
+```{r}
+ham_model <- lm(price ~ packsize + maturation + I(organic) + I(smoked) + I(domestic), data = ham_simple)
+summary(ham_model)
+confint(ham_model)
+```
+
+Holding maturation time and status of organic, smoked and domestic constant, for every additional 100 grams of ham contained in the package, we would expect to see a decrease of 1.14 € on average (95% CI, -1.47 to -0.81). Our R\^2 is not exceptionally high (\~44.1%); adding additional meaningful predictors could increase our ability to accurately predict ham prices.
+
+## Check Assumptions
+
+### LINE
+
+```{r}
+plot(ham_model, which = 1:5)
+avPlots(ham_model)
+vif(ham_model)
+```
+
+We are seriously concerned about the normality assumption being violated, and have minor doubts about the linearity. We suspect that there are a few overly influential observations as well. There does not appear to be any instances of multi-collinearity.
+
+## Where the analysis could go
+
+1.  **Model Structure:** We want to investigate types of transformations to identify the most appropriate and effective transformation that will allow our model assumptions to be met. This well improve the accuracy and validity of our predictions.
+2.  **Cross Validation and Best Subsets:** Best Subsets will be used to select the superior model for each transformation we will try utilzing the AIC metric. We will then assess the performance of models with different transformations using cross validation in order to determine if model assumptions are met and prediction accuracy is acceptable.
+
+## AI disclosure and sources
+
+Chat GPT was utilized to provide basic background information regarding European ham and its economic importance. All code was done by hand initially and ChatGPT assist in formatting the boxplot in an aesthetically pleasing manner. The Data Repository for European protected ham was referenced to interpret variables and learn about dataset details.
