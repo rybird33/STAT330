@@ -1,0 +1,86 @@
+---
+title: "AI Use and Verification"
+description: "A concise record of AI-supported work on this project."
+author: "Zachary Jorgensen, Ryan Bird, Gavin Weber"
+---
+
+This page is a work log, not a second report. Short bullets are welcome. It is separate from the final case study and does not count toward the 750 to 1,000 word range.
+
+## Starting point
+
+**AI system and date:** Google Gemini 11/5/26
+
+**Our question is:** Can we accurately predict the price of a ham product based on the size of the package, the time of maturation, whether it's organic, smoked, or domestically produced?
+
+**Our course-based model is:**
+
+trans_2 \<- lm(log(price) \~ log(packsize) + maturation + I(organic) + I(smoked) + I(domestic), data = ham_simple)
+
+**Our baseline result was:**
+
+We will use trans_2, or the model where both price and packsize have a logarithm transformation applied. We chose this because it has a slightly lower mean rmse than all other models and is more interpretable due to the lack of a square root transformation. This model best fits the LINE model assumptions out of all of the models that we examined. There are many overly influential points, but we decided we're just going to need to include them. We are interested in how we can create more accurate prediction and more interpretable results.
+
+## Substantive prompts
+
+> #### Prompt:
+>
+> We want to fit a more accurate model using more advanced techniques. We are in a class on linear regression and we're looking to go beyond the basics of the class. what would be some good ways to do this?
+
+> #### Response:
+>
+> Penalized Regression (Lasso, Ridge, and Elastic Net) Ordinary Least Squares (OLS) minimizes the sum of squared residuals, which can lead to overfitting if you have many predictors or correlated variables. Penalized regression adds a penalty term to the equation.
+>
+> Lasso (L1 Regularization): Shrinks the coefficients of less important variables to exactly zero. This performs automatic variable selection, leaving you with a sparse, highly interpretable model.
+>
+> Ridge (L2 Regularization): Shrinks coefficients toward zero but never exactly to zero. Excellent for handling severe multicollinearity.
+>
+> Implementation: Easily fit in R using the glmnet package, which integrates directly into the tidymodels framework you are already using.
+>
+> Generalized Additive Models (GAMs) GAMs relax the strict linearity assumption of OLS without acting as a total "black box." Instead of forcing a linear relationship or guessing the right transformation (like your manual log() and sqrt() terms), a GAM fits smooth splines to the data.
+>
+> Mechanism: The model takes the form y=β 0 ​ +f 1 ​ (x 1 ​ )+f 2 ​ (x 2 ​ )+⋯+ϵ, where f represents non-linear smoothing functions.
+>
+> Advantage: It will automatically map the exact curve of a variable like maturation against price without you needing to specify polynomials.
+>
+> Implementation: The mgcv package in R is the standard for fitting GAMs.
+>
+> Tree Ensembles (Random Forests and XGBoost) Single decision trees fit via rpart are intuitive but highly prone to overfitting and high variance. Ensembles combine hundreds or thousands of trees to create a highly accurate consensus prediction.
+>
+> Random Forests: Builds hundreds of deep, independent decision trees on bootstrapped samples of your data and averages their predictions.
+>
+> Gradient Boosting (XGBoost): Builds shallow trees sequentially, where each new tree specifically tries to correct the residual errors made by the previous trees.
+>
+> Advantage: Both methods completely ignore assumptions about normality and automatically discover complex interactions (e.g., if being both organic and smoked drives up price exponentially) without you needing to manually code interaction terms in your formula.
+>
+> Robust and Spatial Bayesian Regression Standard OLS assumes normally distributed errors. If your data suffers from severe non-normality or contains extreme outliers, advanced parameterizations offer more stability.
+>
+> Robust Regression: Bayesian models can replace the standard normal distribution for the error term with a Student-t distribution, which has thicker tails and prevents outliers from pulling the regression line off course.
+>
+> Spatial Modeling: If your dataset contains geographic indicators beyond a simple domestic dummy variable, applying spatial Bayesian modeling can account for spatial autocorrelation (the tendency for products from the same region to have correlated prices).
+>
+> Implementation: The brms package translates standard R formula syntax into Stan code for full Bayesian inference.
+
+## My decisions
+
+\*\* Because we have not applied any of the AI-suggested changes, we have not filled out the following sections but will do so once we have analyzed, checked, and implemented the AI-suggested extension. \*\*
+
+- **Accepted:** What useful advice did you use?
+- **Changed:** What did you adapt to fit your data or goals?
+- **Rejected or corrected:** What advice was unsuitable, unnecessary, or wrong?
+
+**Connection to the final case study:** Identify where the extension's method and result appear on the final page and how they strengthen the course-based analysis.
+
+## Independent verification
+
+1.  **Check and result:** Replace with an official source, diagnostic, simulation, manual calculation, comparison with a known method, or another suitable check.
+2.  **Check and result:** Replace with a different check and what you learned.
+
+Link or cite verification sources where appropriate. A second AI response does not count as independent verification.
+
+## Remaining limitation
+
+**State one important uncertainty, failure mode, or limitation that remains.**
+
+## Other AI use, if any
+
+**Briefly disclose earlier debugging, proofreading, or other AI assistance. Write “None” if there was no other use.**
